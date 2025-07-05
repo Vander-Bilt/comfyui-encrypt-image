@@ -123,7 +123,7 @@ class EncryptImage:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "password":  ("STRING", {"default": "123qwe"}),
+                "password":  ("STRING", {"default": "Bilt8"}),
                 "filename_prefix": ("STRING", {"default": "ComfyUI"}),
                 },
         "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
