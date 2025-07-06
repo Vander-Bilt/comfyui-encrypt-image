@@ -85,11 +85,16 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             pnginfo.add_text('EncryptPwdSha', get_sha256(f'{get_sha256(_password)}Encrypt'))
             params.update(pnginfo=pnginfo)
             super().save(fp, format=self.format, **params)
+            print("EncryptedImage-save")
             # 保存到文件后解密内存内的图片，让直接在内存内使用时图片正常
             dencrypt_image_v2(self, get_sha256(_password)) 
             
     def open(fp,*args, **kwargs):
         image = super_open(fp,*args, **kwargs)
+
+        #PIL.UnidentifiedImageError: cannot identify image file '/kaggle/ComfyUI/output/_output_images_will_be_put_here'
+
+
         # print("Handled in EncryptedImage")
         if _password and image.format.lower() == PngImagePlugin.PngImageFile.format.lower():
             pnginfo = image.info or {}
