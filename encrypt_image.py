@@ -1,4 +1,3 @@
-
 import base64
 import io
 import json
@@ -73,6 +72,22 @@ if PILImage.Image.__name__ != 'EncryptedImage':
                 super().save(fp, format = format, **params)
                 return
             
+            if format and format.lower() == 'webp' and self.is_animated:
+                print("EncryptedImage-save for webp animated")
+                encrypted_frames = []
+                for i in range(self.n_frames):
+                    self.seek(i)
+                    frame = self.copy()
+                    encrypt_image_v2(frame, get_sha256(_password))
+                    encrypted_frames.append(frame)
+                
+                info = self.info.copy()
+                info['encrypt'] = 'pixel_shuffle_2'
+                info['encrypt_sha'] = get_sha256(f'{get_sha256(_password)}Encrypt')
+                params.update(info)
+                encrypted_frames[0].save(fp, format='WEBP', save_all=True, append_images=encrypted_frames[1:], **params)
+                return
+            
             encrypt_image_v2(self, get_sha256(_password))
             self.format = PngImagePlugin.PngImageFile.format
             pnginfo = params.get('pnginfo', PngImagePlugin.PngInfo())
@@ -90,12 +105,43 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             dencrypt_image_v2(self, get_sha256(_password)) 
             
     def open(fp,*args, **kwargs):
-        image = super_open(fp,*args, **kwargs)
-
-        #PIL.UnidentifiedImageError: cannot identify image file '/kaggle/ComfyUI/output/_output_images_will_be_put_here'
-
+        try:
+            image = super_open(fp,*args, **kwargs)
+        except Exception as e:
+            # 如果文件不是图片或无法识别，可以选择以下处理方式：
+            # 1. 记录警告并重新抛出异常（当前行为）
+            # 2. 记录警告并返回一个默认的空图像
+            # 3. 静默忽略错误
+            
+            # 当前实现：记录警告并重新抛出异常
+            # print(f"Warning: Failed to open file as image: {fp}, error: {e}")
+            # raise e
+            
+            # 可选实现1：返回一个1x1的透明图像
+            # print(f"Warning: Failed to open file as image: {fp}, error: {e}")
+            # return EncryptedImage.from_image(PILImage.new('RGBA', (1, 1), (0, 0, 0, 0)))
+            
+            # 可选实现2：静默忽略错误
+            print(f"Warning: Failed to open file as image: {fp}, error: {e}")
+            return None
 
         # print("Handled in EncryptedImage")
+        if _password and image.format.lower() == 'webp':
+            print("webp",image.info)
+            if 'encrypt' in image.info and image.info['encrypt'] == 'pixel_shuffle_2':
+                # 解密
+                decrypted_frames = []
+                for i in range(image.n_frames):
+                    image.seek(i)
+                    frame = image.copy()
+                    dencrypt_image_v2(frame, get_sha256(_password))
+                    decrypted_frames.append(frame)
+                # 创建一个新的内存图像序列
+                output = BytesIO()
+                decrypted_frames[0].save(output, format='WEBP', save_all=True, append_images=decrypted_frames[1:], quality=100, lossless=True,minimize_size=False)
+                output.seek(0)
+                return open(output)
+                
         if _password and image.format.lower() == PngImagePlugin.PngImageFile.format.lower():
             pnginfo = image.info or {}
             if 'Encrypt' in pnginfo and pnginfo["Encrypt"] == 'pixel_shuffle':
@@ -108,6 +154,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
                 pnginfo["Encrypt"] = None
                 image = EncryptedImage.from_image(image=image)
                 return image
+
         return EncryptedImage.from_image(image=image)
 
     # if _password:
