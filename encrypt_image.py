@@ -29,6 +29,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
         __name__ = "EncryptedImage"
         @staticmethod
         def from_image(image:PILImage.Image):
+            print("from_image handled in EncryptedImage")
             image = image.copy()
             img = EncryptedImage()
             img.im = image.im
@@ -72,21 +73,6 @@ if PILImage.Image.__name__ != 'EncryptedImage':
                 super().save(fp, format = format, **params)
                 return
             
-            if format and format.lower() == 'webp' and self.is_animated:
-                print("EncryptedImage-save for webp animated")
-                encrypted_frames = []
-                for i in range(self.n_frames):
-                    self.seek(i)
-                    frame = self.copy()
-                    encrypt_image_v2(frame, get_sha256(_password))
-                    encrypted_frames.append(frame)
-                
-                info = self.info.copy()
-                info['encrypt'] = 'pixel_shuffle_2'
-                info['encrypt_sha'] = get_sha256(f'{get_sha256(_password)}Encrypt')
-                params.update(info)
-                encrypted_frames[0].save(fp, format='WEBP', save_all=True, append_images=encrypted_frames[1:], **params)
-                return
             
             encrypt_image_v2(self, get_sha256(_password))
             self.format = PngImagePlugin.PngImageFile.format
@@ -100,7 +86,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             pnginfo.add_text('EncryptPwdSha', get_sha256(f'{get_sha256(_password)}Encrypt'))
             params.update(pnginfo=pnginfo)
             super().save(fp, format=self.format, **params)
-            print("EncryptedImage-save")
+            print("save handled in EncryptedImage")
             # 保存到文件后解密内存内的图片，让直接在内存内使用时图片正常
             dencrypt_image_v2(self, get_sha256(_password)) 
             
@@ -122,26 +108,11 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             # return EncryptedImage.from_image(PILImage.new('RGBA', (1, 1), (0, 0, 0, 0)))
             
             # 可选实现2：静默忽略错误
-            print(f"Warning: Failed to open file as image: {fp}, error: {e}")
+            # print(f"Warning: Failed to open file as image: {fp}, error: {e}")
             return None
 
-        # print("Handled in EncryptedImage")
-        if _password and image.format.lower() == 'webp':
-            print("webp",image.info)
-            if 'encrypt' in image.info and image.info['encrypt'] == 'pixel_shuffle_2':
-                # 解密
-                decrypted_frames = []
-                for i in range(image.n_frames):
-                    image.seek(i)
-                    frame = image.copy()
-                    dencrypt_image_v2(frame, get_sha256(_password))
-                    decrypted_frames.append(frame)
-                # 创建一个新的内存图像序列
-                output = BytesIO()
-                decrypted_frames[0].save(output, format='WEBP', save_all=True, append_images=decrypted_frames[1:], quality=100, lossless=True,minimize_size=False)
-                output.seek(0)
-                return open(output)
-                
+        print("open Handled in EncryptedImage")
+
         if _password and image.format.lower() == PngImagePlugin.PngImageFile.format.lower():
             pnginfo = image.info or {}
             if 'Encrypt' in pnginfo and pnginfo["Encrypt"] == 'pixel_shuffle':
