@@ -29,7 +29,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
         __name__ = "EncryptedImage"
         @staticmethod
         def from_image(image:PILImage.Image):
-            print("from_image handled in EncryptedImage")
+            # print("from_image handled in EncryptedImage")
             image = image.copy()
             img = EncryptedImage()
             img.im = image.im
@@ -86,7 +86,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             pnginfo.add_text('EncryptPwdSha', get_sha256(f'{get_sha256(_password)}Encrypt'))
             params.update(pnginfo=pnginfo)
             super().save(fp, format=self.format, **params)
-            print("save handled in EncryptedImage")
+            # print("save handled in EncryptedImage")
             # 保存到文件后解密内存内的图片，让直接在内存内使用时图片正常
             dencrypt_image_v2(self, get_sha256(_password)) 
             
@@ -111,10 +111,11 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             # print(f"Warning: Failed to open file as image: {fp}, error: {e}")
             return None
 
-        print("open Handled in EncryptedImage")
+        # print("open Handled in EncryptedImage")
 
         if _password and image.format.lower() == PngImagePlugin.PngImageFile.format.lower():
             pnginfo = image.info or {}
+            # print("----- 检查图片元数据 ------")
             if 'Encrypt' in pnginfo and pnginfo["Encrypt"] == 'pixel_shuffle':
                 dencrypt_image(image, get_sha256(_password))
                 pnginfo["Encrypt"] = None
