@@ -86,7 +86,7 @@ if PILImage.Image.__name__ != 'EncryptedImage':
             pnginfo.add_text('EncryptPwdSha', get_sha256(f'{get_sha256(_password)}Encrypt'))
             params.update(pnginfo=pnginfo)
             super().save(fp, format=self.format, **params)
-            # print("save handled in EncryptedImage")
+            print("加密保存")
             # 保存到文件后解密内存内的图片，让直接在内存内使用时图片正常
             dencrypt_image_v2(self, get_sha256(_password)) 
             
