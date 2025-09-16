@@ -27,6 +27,9 @@ if PILImage.Image.__name__ != 'EncryptedImage':
     
     class EncryptedImage(PILImage.Image):
         __name__ = "EncryptedImage"
+        # Add the required attribute here
+        custom_mimetype = 'image/png'
+
         @staticmethod
         def from_image(image:PILImage.Image):
             # print("from_image handled in EncryptedImage")
