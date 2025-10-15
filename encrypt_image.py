@@ -178,8 +178,12 @@ class EncryptImage:
                 if prompt is not None:
                     metadata.add_text("prompt", json.dumps(prompt))
                 if extra_pnginfo is not None:
-                    for x in extra_pnginfo:
-                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+                    try:
+                        for x in extra_pnginfo:
+                            metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+                    except:
+                        print(f"Error: Failed to add extra_pnginfo to metadata")
+
 
             file = f"{filename}_{counter:05}_.png"
             img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
